@@ -26,13 +26,13 @@ class Database {
         }
     }
 
-    static public function selectAllUsers() {
+    public static function selectAllUsers() {
         $statement = self::connect()->prepare(Constants::SELECT_ALL_USERS);
 
         return self::fetchUsers($statement);
     }
 
-    static public function selectUserByUserName(string $userName) {
+     public static function selectUserByUserName(string $userName) {
         $statement = self::connect()->prepare(Constants::SELECT_USER_BY_USERNAME);
         $statement->bind_param(
             Constants::USER_PARAMS,
@@ -48,7 +48,7 @@ class Database {
         return self::fetchUsers($statement);
     }
 
-    static public function insertUser(User $user) {
+     public static function insertUser(User $user) {
         $statement = self::connect()->prepare(Constants::INSERT_USER);
         $userName = $user->getUserName();
         $email = $user->getEmail();
@@ -75,9 +75,11 @@ class Database {
         return $executed;
     }
 
-    static public function insertUsers(array $users) {
+    public static function insertUsers(array $users) {
         // TODO
     }
+
+
 
     private static function fetchUsers(bool | mysqli_stmt $statement) {
         $statement->execute();
@@ -99,13 +101,59 @@ class Database {
         return $users;
     }
 
-    static public function deleteUser(string $email) {
+    public static function deleteUser(string $email) {
         $statement = self::connect()->prepare(Constants::DELETE_USER);
         $executed = true;
 
         $statement->bind_param(
             Constants::USER_PARAMS,
             $userName,
+            $email
+        );
+
+        try {
+            $statement->execute();
+        } catch (Exception $exception) {
+            $executed = false;
+        }
+
+        return $executed;
+    }
+
+    public static function updateUserData(User $user) {
+        $statement = self::connect()->prepare(Constants::INSERT_USER);
+        $userName = $user->getUserName();
+        $email = $user->getEmail();
+        $gamesPlayed = $user->getGamesPlayed();
+        $gamesWinned = $user->getGamesWinned();
+        $executed = true;
+
+        $statement->bind_param(
+            Constants::USER_DATA_PARAMS,
+            $userName,
+            $gamesPlayed,
+            $gamesWinned,
+            $email
+        );
+
+        try {
+            $statement->execute();
+        } catch (Exception $exception) {
+            $executed = false;
+        }
+
+        return $executed;
+    }
+
+    public static function updateUserPassword(User $user) {
+        $statement = self::connect()->prepare(Constants::INSERT_USER);
+        $email = $user->getEmail();
+        $password = $user->getPassword();
+        $executed = true;
+
+        $statement->bind_param(
+            Constants::USER_PASSWORD_PARAMS,
+            $password,
             $email
         );
 
