@@ -5,19 +5,31 @@ namespace controller;
 use model\User;
 
 class UserController {
-    static public function getAllUsers() {
+    public static function getAllUsers() {
         return Database::selectAllUsers();
     }
 
-    static public function getUserByEmail(string $email) {
+    public static function getUserByEmail(string $email): array {
         return Database::selectUserByEmail($email);
     }
 
-    static public function getUserByUserName(string $userName) {
+    public static function getUserByUserName(string $userName): array {
         return Database::selectUserByUserName($userName);
     }
 
-    static public function insertUser(User $user) {
+    public static function insertUser(User $user): bool {
         return Database::insertUser($user);
+    }
+
+    public static function updateUserData(User $user): bool {
+        return Database::updateUserData($user);
+    }
+
+    public static function updateUserPassword(User $user): bool {
+        return Database::updateUserPassword($user);
+    }
+
+    public static function deleteUser(string $email): bool {
+        return Database::deleteUser($email);
     }
 }

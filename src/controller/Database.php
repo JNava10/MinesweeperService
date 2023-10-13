@@ -15,9 +15,10 @@ class Database {
     static public function connect(): mysqli | string {
         try {
             $connection = new mysqli(
-                Constants::HOSTNAME,
-                Constants::USERNAME,
-                Constants::PASSWORD
+                \Constants::HOSTNAME,
+                \Constants::USERNAME,
+                \Constants::PASSWORD,
+                \Constants::DATABASE
             );
         } catch (Exception $exception) {
             $connection = $exception->getMessage();
@@ -26,30 +27,51 @@ class Database {
         }
     }
 
-    public static function selectAllUsers() {
-        $statement = self::connect()->prepare(Constants::SELECT_ALL_USERS);
+    public static function selectAllUsers(): array | string {
+        try {
+            $connection = self::connect();
+            $statement = $connection->prepare(Constants::SELECT_ALL_USERS);
+            $users = self::fetchUsers($statement);
 
-        return self::fetchUsers($statement);
+            $connection->close();
+
+            return $users;
+        } catch (Exception $exception) {
+            return $exception->getMessage();
+        }
     }
 
-     public static function selectUserByUserName(string $userName) {
-        $statement = self::connect()->prepare(Constants::SELECT_USER_BY_USERNAME);
+     public static function selectUserByUserName(string $userName): array {
+         $connection = self::connect();
+         $statement = $connection->prepare(Constants::SELECT_USER_BY_USERNAME);
+         $statement->bind_param(
+             's',
+             $userName
+         );
+
+         $users = self::fetchUsers($statement);
+         $connection->close();
+
+         return $users;
+    }
+
+    static public function selectUserByEmail(string $email): array {
+        $connection = self::connect();
+        $statement = $connection->prepare(Constants::SELECT_USER_BY_EMAIL);
         $statement->bind_param(
-            Constants::USER_PARAMS,
-            $userName
+            's',
+            $email
         );
 
-        return self::fetchUsers($statement);
+        $users = self::fetchUsers($statement);
+        $connection->close();
+
+        return $users;
     }
 
-    static public function selectUserByEmail(string $email) {
-        $statement = self::connect()->prepare(Constants::SELECT_USER_BY_EMAIL);
-
-        return self::fetchUsers($statement);
-    }
-
-     public static function insertUser(User $user) {
-        $statement = self::connect()->prepare(Constants::INSERT_USER);
+     public static function insertUser(User $user): bool {
+        $connection = self::connect();
+        $statement = $connection->prepare(Constants::INSERT_USER);
         $userName = $user->getUserName();
         $email = $user->getEmail();
         $password = $user->getPassword();
@@ -72,37 +94,14 @@ class Database {
             $executed = false;
         }
 
-        return $executed;
+        $connection->close();
+
+         return $executed;
     }
 
-    public static function insertUsers(array $users) {
-        // TODO
-    }
-
-
-
-    private static function fetchUsers(bool | mysqli_stmt $statement) {
-        $statement->execute();
-        $rows = $statement->get_result();
-        $users = [];
-
-        while ($rows->num_rows !== 0 && $row = $rows->fetch_array()) {
-            $users[] = new User(
-                $row['userName'],
-                $row['email'],
-                $row['password'],
-                $row['gamesPlayed'],
-                $row['gamesWinned']
-            );
-        }
-
-        $rows->free_result();
-
-        return $users;
-    }
-
-    public static function deleteUser(string $email) {
-        $statement = self::connect()->prepare(Constants::DELETE_USER);
+    public static function deleteUser(string $email): bool {
+        $connection = self::connect();
+        $statement = $connection->prepare(Constants::DELETE_USER);
         $executed = true;
 
         $statement->bind_param(
@@ -117,11 +116,14 @@ class Database {
             $executed = false;
         }
 
+        $connection->close();
+
         return $executed;
     }
 
-    public static function updateUserData(User $user) {
-        $statement = self::connect()->prepare(Constants::INSERT_USER);
+    public static function updateUserData(User $user): bool {
+        $connection = self::connect();
+        $statement = $connection->prepare(Constants::INSERT_USER);
         $userName = $user->getUserName();
         $email = $user->getEmail();
         $gamesPlayed = $user->getGamesPlayed();
@@ -142,11 +144,14 @@ class Database {
             $executed = false;
         }
 
+        $connection->close();
+
         return $executed;
     }
 
     public static function updateUserPassword(User $user) {
-        $statement = self::connect()->prepare(Constants::INSERT_USER);
+        $connection = self::connect();
+        $statement = $connection->prepare(Constants::INSERT_USER);
         $email = $user->getEmail();
         $password = $user->getPassword();
         $executed = true;
@@ -163,6 +168,28 @@ class Database {
             $executed = false;
         }
 
+        $connection->close();
+
         return $executed;
+    }
+
+    private static function fetchUsers(bool | mysqli_stmt $statement): array {
+        $statement->execute();
+        $rows = $statement->get_result();
+        $users = [];
+
+        while ($rows->num_rows !== 0 && $row = $rows->fetch_array()) {
+            $users[] = new User(
+                $row['userName'],
+                $row['email'],
+                $row['password'],
+                $row['gamesPlayed'],
+                $row['gamesWinned']
+            );
+        }
+
+        $rows->free_result();
+
+        return $users;
     }
 }

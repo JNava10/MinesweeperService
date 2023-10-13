@@ -1,0 +1,2 @@
+- Añadir metodo de obtener datos de usuario salvo contraseña
+- Cambiar todas las rutas a admin/user
