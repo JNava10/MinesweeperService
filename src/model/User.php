@@ -8,6 +8,8 @@ class User {
     public $password;
     public $gamesPlayed;
     public $gamesWinned;
+    public $role;
+    public $enabled;
 
     /**
      * @param $userName
@@ -16,35 +18,35 @@ class User {
      * @param $gamesPlayed
      * @param $gamesWinned
      */
-    public function __construct($userName, $email, $password, $gamesPlayed, $gamesWinned) {
+    public function __construct($userName, $email, $password, $gamesPlayed, $gamesWinned, $enabled) {
         $this->userName = $userName;
         $this->email = $email;
         $this->password = $password;
         $this->gamesPlayed = $gamesPlayed;
         $this->gamesWinned = $gamesWinned;
+        $this->enabled = $enabled;
     }
 
-    public function getUserName()
+    public function getUserName(): string
     {
         return $this->userName;
     }
 
-    public function getEmail()
-    {
+    public function getEmail(): string {
         return $this->email;
     }
 
-    public function getPassword()
+    public function getPassword(): string | null
     {
         return $this->password;
     }
 
-    public function getGamesPlayed()
+    public function getGamesPlayed(): int
     {
         return $this->gamesPlayed;
     }
 
-    public function getGamesWinned()
+    public function getGamesWinned(): int
     {
         return $this->gamesWinned;
     }
@@ -67,5 +69,15 @@ class User {
     public function setGamesWinned($gamesWinned): void
     {
         $this->gamesWinned = $gamesWinned;
+    }
+
+    public function getEnabled()
+    {
+        return $this->enabled;
+    }
+
+    public function setEnabled($enabled): void
+    {
+        $this->enabled = $enabled;
     }
 }

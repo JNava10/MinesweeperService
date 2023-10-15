@@ -11,5 +11,13 @@ class Status {
         $this->message = $message;
     }
 
+    public function getCode()
+    {
+        return $this->code;
+    }
 
+    public function getMessage()
+    {
+        return $this->message;
+    }
 }
