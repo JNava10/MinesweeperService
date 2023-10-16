@@ -135,9 +135,13 @@ class AdminRoute {
         } elseif (
             $method === Constants::DELETE &&
             $args[2] === array_keys(self::VALID_SUBROUTES)[0] &&
-            !isset($args[3])
+            isset($args[3])
         ) {
-
+            if (UserController::deleteUser($args[3])) {
+                $response['status'] = new Status(200, Constants::RESPONSES[200]);
+            } else {
+                $response['status'] = new Status(500, Constants::RESPONSES[500]);
+            }
         }
 
         return $response;
@@ -197,7 +201,9 @@ class AdminRoute {
         $status = new Status(200, Constants::RESPONSES[200]);
 
         if (
-            isset($body) && !array_search($body['email'], UserController::getAllEmails())
+            isset($body) ||
+            !isset($args[3]) ||
+            !intval($args[3])
         ) {
             $status = new Status(400, Constants::RESPONSES[400]);
         } else if (!in_array($args[2], array_keys(self::VALID_SUBROUTES))) {

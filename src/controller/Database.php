@@ -187,19 +187,17 @@ class Database {
          return $executed;
     }
 
-    public static function deleteUser(string $email): bool {
+    public static function deleteUser(int $id): bool {
         $connection = self::connect();
         $statement = $connection->prepare(Constants::DELETE_USER);
-        $executed = true;
 
         $statement->bind_param(
-            Constants::USER_PARAMS,
-            $userName,
-            $email
+            'i',
+            $id
         );
 
         try {
-            $statement->execute();
+            $executed = $statement->execute();
         } catch (Exception $exception) {
             $executed = false;
         }

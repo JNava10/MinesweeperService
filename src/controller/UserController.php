@@ -49,7 +49,7 @@ class UserController {
         return Database::updateUserStatus($user);
     }
 
-    public static function deleteUser(string $email): bool {
-        return Database::deleteUser($email);
+    public static function deleteUser(int $id): bool {
+        return Database::deleteUser($id);
     }
 }
