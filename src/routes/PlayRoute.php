@@ -3,6 +3,7 @@
 namespace routes;
 
 use Constants;
+use controller\GameController;
 use factory\GameFactory;
 
 
@@ -13,9 +14,14 @@ class PlayRoute {
         };
     }
 
-    private static function handlePostRequest(array $requestArgs, ?array $requestBody): bool|string {
+    private static function handlePostRequest(array $args, ?array $body): bool|string {
         $response = [];
-        $response['game'][] = GameFactory::createDefaultGame();;
+
+        if (!$args[3]) {
+            $response['game'] = GameController::createDefaultGame();
+        } else {
+            $response['game'] = GameFactory::createGame($args[3], $args[4]);
+        }
 
         return json_encode($response);
     }
