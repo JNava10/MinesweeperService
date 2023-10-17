@@ -4,14 +4,12 @@ namespace controller;
 
 use Constants;
 use Exception;
+use model\Game;
 use model\User;
 use mysqli;
 use mysqli_stmt;
 
 class Database {
-
-    //TODO: Test this.
-
     static public function connect(): mysqli | string {
         try {
             $connection = new mysqli(
@@ -27,32 +25,85 @@ class Database {
         }
     }
 
-    public static function insertRow($table, $object): bool {
-        return match ($table) {
-            Constants::GAMES_TABLE => self::insertGame($object)
-        };
-    }
+    // SELECT QUERIES METHODS //
 
-    public static function selectUserGames(string $email, bool $active): array | string {
+    public static function selectGame(int $id) {
         $connection = self::connect();
-        $statement = $connection->prepare(Constants::SELECT_GAMES_BY_USER_EMAIL);
+        $statement = $connection->prepare(Constants::SELECT_GAME_BY_ID);
+
         $statement->bind_param(
-            's',
-            $userName
+            'i',
+            $id
         );
 
-        $users = self::fetchGames($statement);
+        $game = self::fetchGames($statement);
         $connection->close();
 
-        return $users;
+        return $game;
     }
 
-    private static function insertGame(Game $game): bool {
+    public static function selectGameUser(int $id) {
+        $connection = self::connect();
+        $statement = $connection->prepare(Constants::SELECT_GAME_USER);
+
+        $statement->bind_param(
+            'i',
+            $id
+        );
+
+        $statement->execute();
+        $rows = $statement->get_result();
+        $id = 0;
+
+        while ($rows->num_rows !== 0 && $row = $rows->fetch_array()) {
+            $id = $row[0];
+        }
+
+        $rows->free_result();
+        $connection->close();
+        return $id;
+    }
+
+    public static function selectUserGames(int $id, bool $finished): array {
+        $connection = self::connect();
+        $statement = $connection->prepare(Constants::SELECT_GAMES_BY_USER_ID_WHERE_STATUS);
+
+        $statement->bind_param(
+            'ii',
+            $id,
+            $finished
+        );
+
+        $games = self::fetchGames($statement);
+        $connection->close();
+
+        return $games;
+    }
+
+    public static function selectLastGameId() {
+        $connection = self::connect();
+        $statement = $connection->prepare(Constants::SELECT_LAST_GAME_ID);
+
+        $statement->execute();
+        $rows = $statement->get_result();
+        $id = 0;
+
+        while ($rows->num_rows !== 0 && $row = $rows->fetch_array()) {
+            $id = $row[0];
+        }
+
+        $rows->free_result();
+        $connection->close();
+
+        return $id;
+    }
+
+    public static function insertGame(Game $game): bool {
         $connection = self::connect();
         $statement = $connection->prepare(Constants::INSERT_GAME);
         $userId = $game->getUserId();
-        $progress = $game->getProgress();
-        $hidden = $game->getHidden();
+        $progress = implode(',',  $game->getProgress());
+        $hidden = implode(',', $game->getHidden());
         $finished = $game->getFinished();
 
         $statement->bind_param(
@@ -79,20 +130,24 @@ class Database {
     private static function fetchGames(bool|mysqli_stmt $statement): array {
         $statement->execute();
         $rows = $statement->get_result();
-        $users = [];
+        $games = [];
 
         while ($rows->num_rows !== 0 && $row = $rows->fetch_array()) {
-            $users[] = new Game(
+            $game = new Game(
                 $row['userId'],
                 $row['progress'],
                 $row['hidden'],
                 $row['finished']
             );
+
+            $game->setGameId($row['gameId']);
+
+            $games[] = $game;
         }
 
         $rows->free_result();
 
-        return $users;
+        return $games;
     }
 
     public static function selectAllUsers(): array | string {
@@ -150,6 +205,33 @@ class Database {
         $connection->close();
 
         return $user;
+    }
+
+    public static function selectUserId(string $email, string $password) {
+        $connection = self::connect();
+        $statement = $connection->prepare(Constants::SELECT_USER_ID_BY_EMAIL);
+
+        try {
+            $statement->bind_param(
+                'ss',
+                $email,
+                $password
+            );
+
+            $statement->execute();
+            $rows = $statement->get_result();
+
+            while ($rows->num_rows !== 0 && $row = $rows->fetch_array()) {
+                $id = $row[0];
+            }
+        } catch (Exception $exception) {
+            $id = 0;
+        } finally {
+            $rows->free_result();
+            $connection->close();
+        }
+
+        return $id;
     }
 
     public static function selectUserPassword(string $email): string | bool {
@@ -384,5 +466,53 @@ class Database {
         $rows->free_result();
 
         return $users;
+    }
+
+    public static function updateGameProgress(Game $game): bool {
+        $connection = self::connect();
+        $statement = $connection->prepare(Constants::UPDATE_GAME_PROGRESS);
+        $gameProgress = $game->getProgress();
+        $gameId = $game->getGameId();
+        $executed = true;
+
+        $statement->bind_param(
+            'ss',
+            $gameProgress,
+            $gameId
+        );
+
+        try {
+            $statement->execute();
+        } catch (Exception $exception) {
+            $executed = false;
+        }
+
+        $connection->close();
+
+        return $executed;
+    }
+
+    public static function checkIfEmailExists(string $email): bool {
+        return in_array($email, self::selectAllEmails());
+    }
+
+    public static function selectAllGameIds(): bool|array {
+        try {
+            $connection = self::connect();
+            $statement = $connection->prepare(Constants::SELECT_ALL_GAME_IDS);
+            $statement->execute();
+            $rows = $statement->get_result();
+            $ids = [];
+
+            while ($rows->num_rows !== 0 && $row = $rows->fetch_array()) {
+                $ids[] = $row[0];
+            }
+
+            $rows->free_result();
+
+            return $ids;
+        } catch (Exception $exception) {
+            return false;
+        }
     }
 }

@@ -4,11 +4,11 @@ namespace model;
 
 class Status {
     public $code;
-    public $message;
+    public $description;
 
-    public function __construct($code, $message) {
+    public function __construct($code, $description) {
         $this->code = $code;
-        $this->message = $message;
+        $this->description = $description;
     }
 
     public function getCode()
@@ -16,8 +16,8 @@ class Status {
         return $this->code;
     }
 
-    public function getMessage()
+    public function getDescription()
     {
-        return $this->message;
+        return $this->description;
     }
 }

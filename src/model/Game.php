@@ -3,6 +3,7 @@
 namespace model;
 
 class Game {
+    public $gameId;
     public $userId;
     public $progress;
     public $hidden;
@@ -15,7 +16,7 @@ class Game {
         $this->finished = $finished;
     }
 
-    public function getUserId()
+    public function getUserId(): int
     {
         return $this->userId;
     }
@@ -25,7 +26,7 @@ class Game {
         $this->userId = $userId;
     }
 
-    public function getProgress()
+    public function getProgress(): array
     {
         return $this->progress;
     }
@@ -35,7 +36,7 @@ class Game {
         $this->progress = $progress;
     }
 
-    public function getHidden()
+    public function getHidden(): array
     {
         return $this->hidden;
     }
@@ -45,7 +46,7 @@ class Game {
         $this->hidden = $hidden;
     }
 
-    public function getFinished()
+    public function getFinished(): int
     {
         return $this->finished;
     }
@@ -53,5 +54,19 @@ class Game {
     public function setFinished($finished): void
     {
         $this->finished = $finished;
+    }
+
+    public function getGameId(): int
+    {
+        return $this->gameId;
+    }
+
+    public function setGameId($gameId): void
+    {
+        $this->gameId = $gameId;
+    }
+
+    public function setProgressGameBox($content, $index) {
+        $this->progress[$index] = $content;
     }
 }
