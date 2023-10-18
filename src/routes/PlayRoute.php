@@ -80,11 +80,9 @@ class PlayRoute {
                 PlayController::getGame($args[2])->getFinished() !== 0
             ) {
                 $status = new Status(403, Constants::RESPONSES[403]);
-            }
-            elseif (PlayController::getGame($args[2])->getProgress()[$body['gameBox']] !== Constants::HIDDEN) {
+            } elseif (PlayController::getGame($args[2])->getProgress()[$body['gameBox']] !== Constants::HIDDEN) {
                 $status = new Status(409, Constants::RESPONSES[409]);
-            }
-            else {
+            } else {
                 $status = new Status(200, Constants::RESPONSES[200]);
             }
         } elseif ($method === Constants::GET) {

@@ -6,12 +6,14 @@ use routes\PlayRoute;
 
 require_once __DIR__ . "/routes/AdminRoute.php";
 require_once __DIR__ . "/routes/PlayRoute.php";
+require_once __DIR__ . "/routes/LoginRoute.php";
 require_once __DIR__ . '/Constants.php';
 require_once __DIR__ . '/model/Status.php';
 require_once __DIR__ . '/model/User.php';
 require_once __DIR__ . '/model/Game.php';
 require_once __DIR__ . '/controller/Database.php';
 require_once __DIR__ . '/controller/AdminController.php';
+require_once __DIR__ . '/controller/LoginController.php';
 require_once __DIR__ . '/controller/PlayController.php';
 
 $requestMethod = $_SERVER['REQUEST_METHOD'];
@@ -30,6 +32,11 @@ echo match ($requestArgs[1]) {
 
     "play" => PlayRoute::handleRequest(
         $requestArgs,
+        $requestBody,
+        $requestMethod
+    ),
+
+    "login" => LoginRoute::handleRequest(
         $requestBody,
         $requestMethod
     ),

@@ -111,7 +111,7 @@ class PlayController {
         return Database::selectUserGames($id, $finished);
     }
 
-    public static function checkIfEmailExists(string $email) {
+    public static function checkIfEmailExists(string $email): bool {
         return Database::checkIfEmailExists($email);
     }
 

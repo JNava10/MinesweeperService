@@ -213,7 +213,7 @@ class Database {
         return $user;
     }
 
-    public static function selectUserId(string $email, string $password) {
+    public static function selectUserId(string $email, string $password): int | bool {
         $connection = self::connect();
         $statement = $connection->prepare(Constants::SELECT_USER_ID_BY_EMAIL);
 
@@ -227,6 +227,7 @@ class Database {
             $statement->execute();
             $rows = $statement->get_result();
 
+            $id = false;
             while ($rows->num_rows !== 0 && $row = $rows->fetch_array()) {
                 $id = $row[0];
             }
