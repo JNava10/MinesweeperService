@@ -6,10 +6,12 @@ use Constants;
 use Exception;
 use model\Game;
 use model\User;
+use model\UserRanking;
 use mysqli;
 use mysqli_stmt;
 
 class Database {
+
     static public function connect(): mysqli | string {
         try {
             $connection = new mysqli(
@@ -523,5 +525,75 @@ class Database {
         } catch (Exception $exception) {
             return false;
         }
+    }
+
+    public static function selectAllRanking() {
+        try {
+            $connection = self::connect();
+            $statement = $connection->prepare(Constants::SELECT_ALL_USERS_BY_GAMES_WINNED);
+
+            $statement->execute();
+            $rows = $statement->get_result();
+            $users = [];
+
+            while ($rows->num_rows !== 0 && $row = $rows->fetch_array()) {
+                $users[] = new UserRanking(
+                    $row['userName'],
+                    $row['gamesPlayed'],
+                    $row['gamesWinned']
+                );
+            }
+
+            $rows->free_result();
+
+            return $users;
+        } catch (Exception $exception) {
+            echo $exception->getMessage();
+            return false;
+        }
+    }
+
+    public static function increaseUserGames(int $id) {
+        $connection = self::connect();
+
+        try {
+            $statement = $connection->prepare(Constants::UPDATE_USER_SUM_GAME);
+            $executed = true;
+
+            $statement->bind_param(
+                'i',
+                $id
+            );
+
+            $statement->execute();
+        } catch (Exception $exception) {
+            $executed = false;
+        }
+
+        $connection->close();
+
+        return $executed;
+    }
+
+    public static function increaseUserWins(int $id): bool {
+        $connection = self::connect();
+
+        try {
+            $statement = $connection->prepare(Constants::UPDATE_USER_SUM_WINS);
+            $executed = true;
+
+            $statement->bind_param(
+                'i',
+                $id
+            );
+
+            $statement->execute();
+        } catch (Exception $exception) {
+            $executed = false;
+        }
+
+        $connection->close();
+
+        return $executed;
     }
 }

@@ -7,12 +7,15 @@ use routes\PlayRoute;
 require_once __DIR__ . "/routes/AdminRoute.php";
 require_once __DIR__ . "/routes/PlayRoute.php";
 require_once __DIR__ . "/routes/LoginRoute.php";
+require_once __DIR__ . "/routes/RankingRoute.php";
 require_once __DIR__ . '/Constants.php';
 require_once __DIR__ . '/model/Status.php';
 require_once __DIR__ . '/model/User.php';
 require_once __DIR__ . '/model/Game.php';
+require_once __DIR__ . '/model/UserRanking.php';
 require_once __DIR__ . '/controller/Database.php';
 require_once __DIR__ . '/controller/AdminController.php';
+require_once __DIR__ . '/controller/RankingController.php';
 require_once __DIR__ . '/controller/LoginController.php';
 require_once __DIR__ . '/controller/PlayController.php';
 
@@ -37,6 +40,12 @@ echo match ($requestArgs[1]) {
     ),
 
     "login" => LoginRoute::handleRequest(
+        $requestBody,
+        $requestMethod
+    ),
+
+    "ranking" => RankingRoute::handleRequest(
+        $requestArgs,
         $requestBody,
         $requestMethod
     ),

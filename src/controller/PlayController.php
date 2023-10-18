@@ -5,6 +5,7 @@ namespace controller;
 use Constants;
 use factory\GameTableFactory;
 use model\Game;
+use model\User;
 
 class PlayController {
     public static function createGame(int $boxes, int $mines, int $userId): Game | bool {
@@ -35,8 +36,10 @@ class PlayController {
 
         if ($hiddenBox === Constants::MINE) {
             $game->setFinished(-1);
+            self::sumUserGame($game->getUserId(), false);
         } elseif (self::gameIsWinned($game)) {
             $game->setFinished(1);
+            self::sumUserGame($game->getUserId(), true);
         }
 
         if (Database::updateGame($game)) {
@@ -119,13 +122,20 @@ class PlayController {
         return Database::selectAllGameIds();
     }
 
+    public static function sumUserGame(int $id, bool $winned) {
+        $updated = Database::increaseUserGames($id);
+
+        if ($winned) {
+            $updated = Database::increaseUserWins($id);
+        }
+
+        return $updated;
+    }
+
     private static function gameIsWinned(Game $game) {
         $winned = true;
 
         for ($i = 0; $i < $game->getBoxesCount(); $i++) {
-            echo $game->getProgress()[$i];
-            echo $game->getHidden()[$i];
-
             if ($game->getProgress()[$i] === Constants::HIDDEN && $game->getHidden()[$i] !== Constants::MINE) {
                 $winned = false;
             }
