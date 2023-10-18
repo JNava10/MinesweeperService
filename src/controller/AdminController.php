@@ -4,7 +4,7 @@ namespace controller;
 
 use model\User;
 
-class UserController {
+class AdminController {
     public static function getAllUsers() {
         return Database::selectAllUsers();
     }
@@ -51,5 +51,9 @@ class UserController {
 
     public static function deleteUser(int $id): bool {
         return Database::deleteUser($id);
+    }
+
+    public static function getUserId(string $email, string $password) {
+        return Database::selectUserId($email, $password);
     }
 }

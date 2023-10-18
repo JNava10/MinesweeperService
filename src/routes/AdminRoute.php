@@ -3,7 +3,7 @@
 namespace routes;
 
 use Constants;
-use controller\UserController;
+use controller\AdminController;
 use model\Status;
 use model\User;
 
@@ -42,9 +42,9 @@ class AdminRoute {
         $response = [];
 
         if ($method === Constants::GET && !$args[3]) {
-            $response = UserController::getAllUsers();
+            $response = AdminController::getAllUsers();
         } elseif ($method === Constants::GET && $args[3]) {
-            $response = UserController::getUserByUserName($args[3]);
+            $response = AdminController::getUserByUserName($args[3]);
         } elseif ($method === Constants::POST && $args[2] === self::VALID_SUBROUTES[0]) {
             $user = new User(
                 $body['userName'],
@@ -55,13 +55,13 @@ class AdminRoute {
                 $body['enabled']
             );
 
-            $response = UserController::insertUser($user);
+            $response = AdminController::insertUser($user);
         } elseif (
             $method === Constants::PUT &&
             $args[2] === array_keys(self::VALID_SUBROUTES)[0] &&
             $args[3] === self::VALID_SUBROUTES['users'][0]
         ) {
-            $userData = UserController::getUserData($body['email']);
+            $userData = AdminController::getUserData($body['email']);
             $response['status'] = new Status(400, Constants::RESPONSES[400]);
 
             if (
@@ -78,7 +78,7 @@ class AdminRoute {
                     $body['enabled']
                 );
 
-                if (UserController::updateUserData($user)) {
+                if (AdminController::updateUserData($user)) {
                     $response['status'] = new Status(200, Constants::RESPONSES[200]);
                 }
             } else {
@@ -89,7 +89,7 @@ class AdminRoute {
             $args[2] === array_keys(self::VALID_SUBROUTES)[0] &&
             $args[3] === self::VALID_SUBROUTES['users'][1]
         ) {
-            $currentPassword = UserController::getUserPassword($body['email']);
+            $currentPassword = AdminController::getUserPassword($body['email']);
             $response['status'] = new Status(400, Constants::RESPONSES[400]);
 
             if ($body['password'] !== $currentPassword) {
@@ -102,7 +102,7 @@ class AdminRoute {
                     null
                 );
 
-                if (UserController::updateUserPassword($user)) {
+                if (AdminController::updateUserPassword($user)) {
                     $response['status'] = new Status(200, Constants::RESPONSES[200]);
                 }
             } else {
@@ -113,7 +113,7 @@ class AdminRoute {
             $args[2] === array_keys(self::VALID_SUBROUTES)[0] &&
             $args[3] === self::VALID_SUBROUTES['users'][2]
         ) {
-            $userStatus = UserController::getUserStatus($body['email']);
+            $userStatus = AdminController::getUserStatus($body['email']);
             $response['status'] = new Status(400, Constants::RESPONSES[400]);
 
             if ($body['enabled'] !== $userStatus) {
@@ -126,7 +126,7 @@ class AdminRoute {
                     $body['enabled']
                 );
 
-                if (UserController::updateUserStatus($user)) {
+                if (AdminController::updateUserStatus($user)) {
                     $response['status'] = new Status(200, Constants::RESPONSES[200]);
                 }
             } else {
@@ -137,7 +137,7 @@ class AdminRoute {
             $args[2] === array_keys(self::VALID_SUBROUTES)[0] &&
             isset($args[3])
         ) {
-            if (UserController::deleteUser($args[3])) {
+            if (AdminController::deleteUser($args[3])) {
                 $response['status'] = new Status(200, Constants::RESPONSES[200]);
             } else {
                 $response['status'] = new Status(500, Constants::RESPONSES[500]);
@@ -183,7 +183,7 @@ class AdminRoute {
         if (
             !isset($body)
         ) {
-            echo !array_search($body['email'], UserController::getAllEmails());
+            echo !array_search($body['email'], AdminController::getAllEmails());
             $status = new Status(400, Constants::RESPONSES[400]);
         } else if (
             !in_array($args[2], array_keys(self::VALID_SUBROUTES)) ||
