@@ -10,12 +10,12 @@ class PlayController {
     public static function createGame(int $boxes, int $mines, int $userId): Game | bool {
         $game = self::createHiddenTable($boxes, $mines, $userId);
         Database::insertGame($game);
-        $game->setGameId(Database::selectLastGameId() + 1);
+        $game->setGameId(Database::selectLastGameId());
 
         return $game;
     }
 
-    public static function getGame(int $id): array{
+    public static function getGame(int $id): Game {
         return Database::selectGame($id);
     }
 
@@ -23,36 +23,24 @@ class PlayController {
         return Database::selectGameUser($gameId);
     }
 
-    public static function updateGame(string $userEmail, string $userPassword, int $gameBox) {
-        $response = null;
-
-        echo Database::selectUserId($userEmail, $userPassword);
-        $activeGamesList = Database::selectUserGames($userEmail, true);
-
-        if (!$activeGamesList) {
-            $response = false;
-        } elseif (count($activeGamesList) === 1) {
-            $game = $activeGamesList[0];
-
-            $response = self::updateGameProgress($game, $gameBox);
-        }
-
-        return $response;
+    public static function updateGame(int $gameId, int $gameBox) {
+        $game = PlayController::getGame($gameId);
+        return self::updateGameProgress($game, $gameBox);
     }
 
-    private static function updateGameProgress(Game $game, int $gameBox): bool | int {
+    private static function updateGameProgress(Game $game, int $gameBox): Game | bool {
         $hiddenBox = $game->getHidden()[$gameBox];
 
         $game->setProgressGameBox($hiddenBox, $gameBox);
 
         if ($hiddenBox === Constants::MINE) {
             $game->setFinished(-1);
-        } elseif (!array_search(Constants::HIDDEN,  $game->getProgress())) {
+        } elseif (self::gameIsWinned($game)) {
             $game->setFinished(1);
         }
 
-        if (Database::updateGameProgress($game)) {
-            return $game->getFinished();
+        if (Database::updateGame($game)) {
+            return $game;
         } else {
             return false;
         }
@@ -71,48 +59,56 @@ class PlayController {
     }
 
     private static function placeMines(array $gameBoxes, int $mines): array {
-        for ($i = 0; $i < $mines; $i++) {
+        $minesPlaced = 0;
+        for ($i = 0; $minesPlaced < $mines; $i++) {
             $minePosition = rand(0, count($gameBoxes) - 1);
 
-            if ($gameBoxes[$minePosition] !== Constants::MINE) {
-                $gameBoxes[$minePosition] = Constants::MINE;
-
+            while ($gameBoxes[$minePosition] === Constants::MINE) {
                 echo $minePosition;
+                $minePosition = rand(0, count($gameBoxes) - 1);
             }
+
+            $gameBoxes[$minePosition] = Constants::MINE;
+
+            $minesPlaced++;
         }
 
         return $gameBoxes;
     }
 
     private static function placeAdjacentNumbers(array $gameBoxes): array {
-
         for ($i = 0; $i < count($gameBoxes); $i++) {
-            if (
+        if (
+                $gameBoxes[$i] !== Constants::MINE && (
+                    isset($gameBoxes[$i + 1]) && $gameBoxes[$i + 1] === Constants::MINE &&
+                    isset($gameBoxes[$i - 1]) && $gameBoxes[$i - 1] === Constants::MINE
+                )
+            ) {
+            $gameBoxes[$i] = 2;
+        }
+        elseif (
                 $gameBoxes[$i] !== Constants::MINE && (
                     isset($gameBoxes[$i + 1]) && $gameBoxes[$i + 1] === Constants::MINE ||
                     isset($gameBoxes[$i - 1]) && $gameBoxes[$i - 1] === Constants::MINE
                 )
             ) {
                 $gameBoxes[$i] = 1;
-            } elseif (
-                $gameBoxes[$i] !== Constants::MINE && (
-                    isset($gameBoxes[$i + 1]) && $gameBoxes[$i + 1] === Constants::MINE &&
-                    isset($gameBoxes[$i - 1]) && $gameBoxes[$i - 1] === Constants::MINE
-                )
-            ) {
-                $gameBoxes[$i] = 2;
             }
         }
 
         return $gameBoxes;
     }
 
+    public static function getUserId(string $email, string $password): int | null {
+        return Database::selectUserId($email, $password);
+    }
+
     public static function createProgressTable(int $gameBoxes): array {
         return array_fill(0, $gameBoxes, Constants::HIDDEN);
     }
 
-    public static function getUserOpenedGames(int $id): array {
-        return Database::selectUserGames($id, false);
+    public static function getUserGames(int $id, bool $finished): array {
+        return Database::selectUserGames($id, $finished);
     }
 
     public static function checkIfEmailExists(string $email) {
@@ -121,5 +117,20 @@ class PlayController {
 
     public static function getGameIdList(): array {
         return Database::selectAllGameIds();
+    }
+
+    private static function gameIsWinned(Game $game) {
+        $winned = true;
+
+        for ($i = 0; $i < $game->getBoxesCount(); $i++) {
+            echo $game->getProgress()[$i];
+            echo $game->getHidden()[$i];
+
+            if ($game->getProgress()[$i] === Constants::HIDDEN && $game->getHidden()[$i] !== Constants::MINE) {
+                $winned = false;
+            }
+        }
+
+        return $winned;
     }
 }

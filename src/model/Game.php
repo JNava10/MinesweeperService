@@ -69,4 +69,8 @@ class Game {
     public function setProgressGameBox($content, $index) {
         $this->progress[$index] = $content;
     }
+
+    public function getBoxesCount() {
+        return count($this->progress);
+    }
 }

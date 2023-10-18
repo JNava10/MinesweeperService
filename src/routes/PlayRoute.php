@@ -28,21 +28,23 @@ class PlayRoute {
         return json_encode($response);
     }
 
-    private static function handlePostRequest(array $args, ?array $body) {
+    private static function handlePostRequest(array $args, array $body) {
         $response = [];
 
-        if (isset($args[2]) && $args[2] === 'surrender') {
+        if ($args[2] === 'surrender') {
             // TODO: Surrender
-        } else {
-            $response['gameStatus'] = PlayController::updateGame($body['email'], $body['password'], $body['gameBox']);
+        } else if (intval($args[2])) {
+            $response['gameStatus'] = PlayController::updateGame($args[2], $body['gameBox']);
         }
+
+        return $response;
     }
 
     private static function handleGetRequest(array $args, array $body): array {
         $userId = AdminController::getUserId($body['email'], $body['password']);
 
         if (!isset($args[2])) {
-            $response['games'] = PlayController::getUserOpenedGames($userId);
+            $response['games'] = PlayController::getUserGames($userId, false);
         } elseif ($args[2] === self::VALID_SUBROUTES[0] && !isset($args[3])) {
             $response['game'] = PlayController::createGame(Constants::DEFAULT_BOXES, Constants::DEFAULT_MINES, $userId);
         } elseif ($args[2] === self::VALID_SUBROUTES[0] && $args[3]) {
@@ -55,19 +57,32 @@ class PlayRoute {
     }
 
     private static function getStatus(array $args, array $body, string $method): Status {
-        $userId = AdminController::getUserId($body['email'], $body['password']);
-
         if ($method === Constants::POST) {
             if (
-                !$args[2] ||
-                !intval($args[2]) ||
+                !isset($args[2]) ||
+                !intval($args[2]) && $args[2] !== 'surrender' ||
                 !isset($body['email']) ||
                 !isset($body['password']) ||
                 !isset($body['gameBox'])
             ) {
                 $status = new Status(400, Constants::RESPONSES[400]);
-            } elseif (!PlayController::checkIfEmailExists($body['email'])) {
+            }
+            elseif (
+                !PlayController::checkIfEmailExists($body['email']) ||
+                !in_array($args[2], PlayController::getGameIdList()) ||
+                is_null(PlayController::getUserId($body['email'], $body['password']))
+            ) {
                 $status = new Status(404, Constants::RESPONSES[404]);
+            } elseif (isset($args[3])) {
+                $status = new Status(414, Constants::RESPONSES[414]);
+            } elseif (
+                PlayController::getUserId($body['email'], $body['password']) !== PlayController::getGameUser($args[2]) ||
+                PlayController::getGame($args[2])->getFinished() !== 0
+            ) {
+                $status = new Status(403, Constants::RESPONSES[403]);
+            }
+            elseif (PlayController::getGame($args[2])->getProgress()[$body['gameBox']] !== Constants::HIDDEN) {
+                $status = new Status(409, Constants::RESPONSES[409]);
             }
             else {
                 $status = new Status(200, Constants::RESPONSES[200]);
@@ -81,22 +96,21 @@ class PlayRoute {
                 $args[4] < 1) ||
                 !$body ||
                 !isset($body['email']) ||
-                !isset($body['password'])
+                !isset($body['password']) ||
+                is_null(PlayController::getUserId($body['email'], $body['password']))
             )  {
                 $status = new Status(400, Constants::RESPONSES[400]);
             } elseif (
                 !PlayController::checkIfEmailExists($body['email']) ||
                 PlayController::checkIfEmailExists($body['email']) &&
-               (!intval($args[2]) && !in_array($args[2], self::VALID_SUBROUTES) ||
+               (isset($args[2]) && !intval($args[2]) && !in_array($args[2], self::VALID_SUBROUTES) ||
                 intval($args[2]) && !in_array($args[2], PlayController::getGameIdList()))
             ) {
-                echo  intval($args[2]);
                 $status = new Status(404, Constants::RESPONSES[404]);
             } elseif (
-                !in_array($args[2], self::VALID_SUBROUTES) &&
-                PlayController::getGameUser($args[2]) !== $userId
+                isset($args[2]) && !in_array($args[2], self::VALID_SUBROUTES) &&
+                PlayController::getGameUser($args[2]) !== PlayController::getUserId($body['email'], $body['password'])
             ) {
-                echo !in_array($args[2], self::VALID_SUBROUTES);
                 $status = new Status(403, Constants::RESPONSES[403]);
             }
             else {

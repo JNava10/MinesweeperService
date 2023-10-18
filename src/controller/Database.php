@@ -27,16 +27,22 @@ class Database {
 
     // SELECT QUERIES METHODS //
 
-    public static function selectGame(int $id) {
+    public static function selectGame(int $id): Game | null {
         $connection = self::connect();
-        $statement = $connection->prepare(Constants::SELECT_GAME_BY_ID);
 
-        $statement->bind_param(
-            'i',
-            $id
-        );
+        try {
+            $statement = $connection->prepare(Constants::SELECT_GAME_BY_ID);
 
-        $game = self::fetchGames($statement);
+            $statement->bind_param(
+                'i',
+                $id
+            );
+
+            $game = self::fetchGames($statement)[0];
+        } catch (Exception $exception) {
+            echo $exception->getMessage();
+        }
+
         $connection->close();
 
         return $game;
@@ -135,8 +141,8 @@ class Database {
         while ($rows->num_rows !== 0 && $row = $rows->fetch_array()) {
             $game = new Game(
                 $row['userId'],
-                $row['progress'],
-                $row['hidden'],
+                explode(',', $row['progress']),
+                explode(',', $row['hidden']),
                 $row['finished']
             );
 
@@ -468,16 +474,18 @@ class Database {
         return $users;
     }
 
-    public static function updateGameProgress(Game $game): bool {
+    public static function updateGame(Game $game): bool {
         $connection = self::connect();
         $statement = $connection->prepare(Constants::UPDATE_GAME_PROGRESS);
-        $gameProgress = $game->getProgress();
+        $gameProgress = implode(',', $game->getProgress());
         $gameId = $game->getGameId();
+        $gameFinished = $game->getFinished();
         $executed = true;
 
         $statement->bind_param(
-            'ss',
+            'sii',
             $gameProgress,
+            $gameFinished,
             $gameId
         );
 
